@@ -6,6 +6,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { TrashPage } from "./pages/TrashPage";
+import { FavoritesPage } from "./pages/FavoritesPage";
+import { RecentFilesPage } from "./pages/RecentFilesPage";
+import { GalleryPage } from "./pages/GalleryPage";
+import { SharedLinksPage } from "./pages/SharedLinksPage";
+import { OfflineFilesPage } from "./pages/OfflineFilesPage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { BackupSchedulesPage } from "./pages/BackupSchedulesPage";
+import { SharedFilePage } from "./pages/SharedFilePage";
 
 const queryClient = new QueryClient();
 
@@ -18,7 +27,15 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/dashboard/trash" element={<TrashPage />} />
+            <Route path="/dashboard/favorites" element={<FavoritesPage />} />
+            <Route path="/dashboard/recent" element={<RecentFilesPage />} />
+            <Route path="/dashboard/gallery" element={<GalleryPage />} />
+            <Route path="/dashboard/shared" element={<SharedLinksPage />} />
+            <Route path="/dashboard/offline" element={<OfflineFilesPage />} />
+            <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
+            <Route path="/dashboard/backup" element={<BackupSchedulesPage />} />
+            <Route path="/share/:token" element={<SharedFilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
