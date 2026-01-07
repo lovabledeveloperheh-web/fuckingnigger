@@ -14,11 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_schedules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          folder_paths: string[] | null
+          frequency: string
+          id: string
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          folder_paths?: string[] | null
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          folder_paths?: string[] | null
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          file_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       files: {
         Row: {
           created_at: string
           folder_path: string | null
           id: string
+          is_deleted: boolean
           mime_type: string | null
           name: string
           size: number
@@ -30,6 +88,7 @@ export type Database = {
           created_at?: string
           folder_path?: string | null
           id?: string
+          is_deleted?: boolean
           mime_type?: string | null
           name: string
           size?: number
@@ -41,11 +100,36 @@ export type Database = {
           created_at?: string
           folder_path?: string | null
           id?: string
+          is_deleted?: boolean
           mime_type?: string | null
           name?: string
           size?: number
           storage_path?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      offline_files: {
+        Row: {
+          cache_size: number
+          cached_at: string
+          file_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          cache_size?: number
+          cached_at?: string
+          file_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          cache_size?: number
+          cached_at?: string
+          file_id?: string
+          id?: string
           user_id?: string
         }
         Relationships: []
@@ -113,6 +197,63 @@ export type Database = {
         }
         Relationships: []
       }
+      recent_files: {
+        Row: {
+          accessed_at: string
+          file_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          file_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          file_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shared_links: {
+        Row: {
+          created_at: string
+          download_count: number
+          expires_at: string | null
+          file_id: string
+          id: string
+          max_downloads: number | null
+          password: string | null
+          share_token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          download_count?: number
+          expires_at?: string | null
+          file_id: string
+          id?: string
+          max_downloads?: number | null
+          password?: string | null
+          share_token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          download_count?: number
+          expires_at?: string | null
+          file_id?: string
+          id?: string
+          max_downloads?: number | null
+          password?: string | null
+          share_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sync_status: {
         Row: {
           created_at: string
@@ -146,12 +287,51 @@ export type Database = {
         }
         Relationships: []
       }
+      trash: {
+        Row: {
+          deleted_at: string
+          expires_at: string
+          id: string
+          mime_type: string | null
+          name: string
+          original_file_id: string | null
+          original_folder_path: string | null
+          size: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          expires_at?: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          original_file_id?: string | null
+          original_folder_path?: string | null
+          size?: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          deleted_at?: string
+          expires_at?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          original_file_id?: string | null
+          original_folder_path?: string | null
+          size?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_trash: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
