@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Folder, Grid3X3, List, FileX } from 'lucide-react';
+import { Folder, Grid3X3, List, FileX, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FileCard } from './FileCard';
+import { FilePreviewModal } from './FilePreviewModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -15,10 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
 
 interface File {
   id: string;
@@ -41,11 +38,24 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [deleteFile, setDeleteFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [currentFolder, setCurrentFolder] = useState('/');
 
   const filteredFiles = files.filter(file =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    file.folder_path === currentFolder
   );
+
+  // Get unique folders in current path
+  const subFolders = [...new Set(
+    files
+      .filter(f => f.folder_path.startsWith(currentFolder) && f.folder_path !== currentFolder)
+      .map(f => {
+        const remainingPath = f.folder_path.slice(currentFolder.length);
+        const nextFolder = remainingPath.split('/')[0];
+        return nextFolder;
+      })
+      .filter(Boolean)
+  )];
 
   const handleDownload = async (file: File) => {
     try {
@@ -58,13 +68,18 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name;
+      a.download = file.name; // Use original filename
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
       
-      toast.success('Download started!');
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success(`Downloading ${file.name}`);
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
@@ -100,21 +115,24 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
     }
   };
 
-  const handlePreview = async (file: File) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('user-files')
-        .createSignedUrl(file.storage_path, 3600);
-
-      if (error) throw error;
-
-      setPreviewUrl(data.signedUrl);
-      setPreviewFile(file);
-    } catch (error) {
-      console.error('Preview error:', error);
-      toast.error('Failed to preview file');
-    }
+  const navigateToFolder = (folderName: string) => {
+    setCurrentFolder(`${currentFolder}${folderName}/`);
   };
+
+  const navigateUp = () => {
+    const parts = currentFolder.split('/').filter(Boolean);
+    parts.pop();
+    setCurrentFolder(parts.length > 0 ? `/${parts.join('/')}/` : '/');
+  };
+
+  // Get previewable files for navigation in modal
+  const previewableFiles = filteredFiles.filter(f => 
+    f.mime_type?.startsWith('image/') || 
+    f.mime_type?.startsWith('video/') || 
+    f.mime_type?.startsWith('audio/') ||
+    f.mime_type === 'application/pdf' ||
+    f.mime_type?.startsWith('text/')
+  );
 
   if (loading) {
     return (
@@ -136,10 +154,32 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
 
   return (
     <>
+      {/* Breadcrumb */}
+      {currentFolder !== '/' && (
+        <div className="flex items-center gap-2 mb-4 text-sm">
+          <Button variant="ghost" size="sm" onClick={() => setCurrentFolder('/')}>
+            <Folder className="w-4 h-4 mr-1" />
+            Root
+          </Button>
+          {currentFolder.split('/').filter(Boolean).map((part, index, arr) => (
+            <span key={index} className="flex items-center gap-2">
+              <span className="text-muted-foreground">/</span>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setCurrentFolder(`/${arr.slice(0, index + 1).join('/')}/`)}
+              >
+                {part}
+              </Button>
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Folder className="w-4 h-4" />
-          <span>{filteredFiles.length} files</span>
+          <span>{filteredFiles.length} files, {subFolders.length} folders</span>
         </div>
         <div className="flex gap-1">
           <Button
@@ -161,7 +201,7 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
         </div>
       </div>
 
-      {filteredFiles.length === 0 ? (
+      {filteredFiles.length === 0 && subFolders.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -183,15 +223,60 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
             ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
             : 'space-y-2'
         }>
+          {/* Back button if in subfolder */}
+          {currentFolder !== '/' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="file-card"
+              onClick={navigateUp}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                  <FolderOpen className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">..</p>
+                  <p className="text-xs text-muted-foreground">Go back</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Subfolders */}
+          <AnimatePresence mode="popLayout">
+            {subFolders.map((folder, index) => (
+              <motion.div
+                key={`folder-${folder}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="file-card"
+                onClick={() => navigateToFolder(folder)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <Folder className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{folder}</p>
+                    <p className="text-xs text-muted-foreground">Folder</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {/* Files */}
           <AnimatePresence mode="popLayout">
             {filteredFiles.map((file, index) => (
               <FileCard
                 key={file.id}
                 file={file}
-                index={index}
+                index={index + subFolders.length}
                 onDownload={handleDownload}
                 onDelete={() => setDeleteFile(file)}
-                onPreview={handlePreview}
+                onPreview={() => setPreviewFile(file)}
               />
             ))}
           </AnimatePresence>
@@ -216,30 +301,13 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Preview Dialog */}
-      <Dialog open={!!previewFile} onOpenChange={() => { setPreviewFile(null); setPreviewUrl(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-          <div className="p-4 border-b">
-            <h3 className="font-medium truncate">{previewFile?.name}</h3>
-          </div>
-          <div className="p-4 flex items-center justify-center min-h-[400px] bg-secondary/20">
-            {previewUrl && previewFile?.mime_type?.startsWith('image/') && (
-              <img
-                src={previewUrl}
-                alt={previewFile.name}
-                className="max-w-full max-h-[70vh] object-contain"
-              />
-            )}
-            {previewUrl && previewFile?.mime_type === 'application/pdf' && (
-              <iframe
-                src={previewUrl}
-                className="w-full h-[70vh]"
-                title={previewFile.name}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Preview Modal */}
+      <FilePreviewModal
+        file={previewFile}
+        files={previewableFiles}
+        onClose={() => setPreviewFile(null)}
+        onDownload={handleDownload}
+      />
     </>
   );
 };

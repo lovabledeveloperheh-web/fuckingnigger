@@ -4,8 +4,10 @@ import { Header } from '@/components/dashboard/Header';
 import { StorageIndicator } from '@/components/dashboard/StorageIndicator';
 import { FileUpload } from '@/components/dashboard/FileUpload';
 import { FileGrid } from '@/components/dashboard/FileGrid';
+import { SyncIndicator } from '@/components/dashboard/SyncIndicator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useFileSync } from '@/hooks/useFileSync';
 
 interface FileData {
   id: string;
@@ -24,8 +26,9 @@ interface ProfileData {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { syncState } = useFileSync();
   const [files, setFiles] = useState<FileData[]>([]);
-  const [profile, setProfile] = useState<ProfileData>({ storage_used: 0, storage_limit: 5368709120 });
+  const [profile, setProfile] = useState<ProfileData>({ storage_used: 0, storage_limit: 1125899906842624 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentFolder] = useState('/');
@@ -73,6 +76,14 @@ const Dashboard = () => {
     fetchFiles();
     fetchProfile();
   }, [user]);
+
+  // Refresh when sync completes
+  useEffect(() => {
+    if (!syncState.isSyncing && syncState.progress === 100 && syncState.syncedFiles > 0) {
+      fetchFiles();
+      fetchProfile();
+    }
+  }, [syncState.isSyncing]);
 
   const handleRefresh = () => {
     fetchFiles();
@@ -150,6 +161,14 @@ const Dashboard = () => {
           </motion.div>
         </main>
       </div>
+
+      {/* Sync Progress Indicator */}
+      <SyncIndicator 
+        isSyncing={syncState.isSyncing}
+        progress={syncState.progress}
+        totalFiles={syncState.totalFiles}
+        syncedFiles={syncState.syncedFiles}
+      />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cloud, Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Cloud, Mail, Lock, User, Loader2, Eye, EyeOff, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ export const AuthForm = () => {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,6 +35,34 @@ export const AuthForm = () => {
       toast.error(error.message || 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasskeyAuth = async () => {
+    // Check if WebAuthn is supported
+    if (!window.PublicKeyCredential) {
+      toast.error('Passkey authentication is not supported on this device');
+      return;
+    }
+
+    setPasskeyLoading(true);
+
+    try {
+      // Check if platform authenticator is available (fingerprint, face ID, etc.)
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      
+      if (!available) {
+        toast.error('No passkey authenticator available on this device');
+        return;
+      }
+
+      toast.info('Passkey authentication requires the native app. Please use email/password for now, or install the app on your device.');
+      
+    } catch (error: any) {
+      console.error('Passkey error:', error);
+      toast.error('Passkey authentication failed');
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -76,6 +105,31 @@ export const AuthForm = () => {
             >
               Sign Up
             </Button>
+          </div>
+
+          {/* Passkey Button */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mb-4 h-12"
+            onClick={handlePasskeyAuth}
+            disabled={passkeyLoading}
+          >
+            {passkeyLoading ? (
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            ) : (
+              <Fingerprint className="w-5 h-5 mr-2" />
+            )}
+            {isLogin ? 'Sign in with Passkey' : 'Register with Passkey'}
+          </Button>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or continue with email</span>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
