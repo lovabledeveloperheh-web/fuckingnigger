@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      passkey_credentials: {
+        Row: {
+          created_at: string
+          credential_id: string
+          device_name: string | null
+          id: string
+          public_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id: string
+          device_name?: string | null
+          id?: string
+          public_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string
+          device_name?: string | null
+          id?: string
+          public_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -81,6 +108,39 @@ export type Database = {
           id?: string
           storage_limit?: number
           storage_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sync_status: {
+        Row: {
+          created_at: string
+          id: string
+          is_syncing: boolean
+          last_sync_at: string | null
+          synced_files: number
+          total_files: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_syncing?: boolean
+          last_sync_at?: string | null
+          synced_files?: number
+          total_files?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_syncing?: boolean
+          last_sync_at?: string | null
+          synced_files?: number
+          total_files?: number
           updated_at?: string
           user_id?: string
         }
