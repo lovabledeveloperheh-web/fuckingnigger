@@ -8,15 +8,29 @@ const config: CapacitorConfig = {
     url: 'https://55f9cac6-532e-42d5-905a-9c8106220862.lovableproject.com?forceHideBadge=true',
     cleartext: true
   },
+  ios: {
+    contentInset: 'automatic',
+    preferredContentMode: 'mobile',
+    scrollEnabled: true
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true
+  },
   plugins: {
-    // Background sync configuration
-    BackgroundRunner: {
-      label: 'com.cloudvault.background.sync',
-      src: 'background.js',
-      event: 'syncFiles',
-      repeat: true,
-      interval: 15, // Run every 15 minutes
-      autoStart: true
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#0f172a',
+      showSpinner: false
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#0f172a'
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true
     }
   }
 };
