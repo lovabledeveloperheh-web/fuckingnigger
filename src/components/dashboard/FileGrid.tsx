@@ -32,9 +32,12 @@ interface FileGridProps {
   loading: boolean;
   searchQuery: string;
   onRefresh: () => void;
+  favorites?: { file_id: string }[];
+  onToggleFavorite?: (fileId: string) => void;
+  isFavorite?: (fileId: string) => boolean;
 }
 
-export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridProps) => {
+export const FileGrid = ({ files, loading, searchQuery, onRefresh, favorites, onToggleFavorite, isFavorite }: FileGridProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [deleteFile, setDeleteFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -277,6 +280,8 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh }: FileGridPro
                 onDownload={handleDownload}
                 onDelete={() => setDeleteFile(file)}
                 onPreview={() => setPreviewFile(file)}
+                isFavorite={isFavorite ? isFavorite(file.id) : false}
+                onToggleFavorite={onToggleFavorite}
               />
             ))}
           </AnimatePresence>

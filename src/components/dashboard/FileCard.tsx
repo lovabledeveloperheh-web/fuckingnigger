@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { StarButton } from './StarButton';
 
 interface FileCardProps {
   file: {
@@ -24,9 +25,11 @@ interface FileCardProps {
   onDelete: (file: any) => void;
   onPreview: (file: any) => void;
   index: number;
+  isFavorite?: boolean;
+  onToggleFavorite?: (fileId: string) => void;
 }
 
-export const FileCard = ({ file, onDownload, onDelete, onPreview, index }: FileCardProps) => {
+export const FileCard = ({ file, onDownload, onDelete, onPreview, index, isFavorite = false, onToggleFavorite }: FileCardProps) => {
   const getFileIcon = (mimeType: string | null) => {
     if (!mimeType) return File;
     if (mimeType.startsWith('image/')) return Image;
@@ -87,7 +90,15 @@ export const FileCard = ({ file, onDownload, onDelete, onPreview, index }: FileC
           </div>
         </div>
 
-        <DropdownMenu>
+        <div className="flex items-center gap-1">
+          {onToggleFavorite && (
+            <StarButton
+              isFavorite={isFavorite}
+              onToggle={() => onToggleFavorite(file.id)}
+            />
+          )}
+
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="ghost" 
@@ -114,6 +125,7 @@ export const FileCard = ({ file, onDownload, onDelete, onPreview, index }: FileC
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </motion.div>
   );
