@@ -1,12 +1,11 @@
 import { Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useOffline } from '@/hooks/useOffline';
 
-interface OfflineIndicatorProps {
-  isOnline: boolean;
-}
+export const OfflineIndicator = () => {
+  const { isOnline } = useOffline();
 
-export const OfflineIndicator = ({ isOnline }: OfflineIndicatorProps) => {
   return (
     <AnimatePresence>
       {!isOnline && (

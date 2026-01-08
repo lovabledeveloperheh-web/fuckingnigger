@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   FolderOpen, Clock, Star, Image, Link, CloudOff, 
-  Trash2, BarChart3, Calendar, Settings, X
+  Trash2, BarChart3, Calendar, Settings, X, Cloud
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -9,14 +9,15 @@ import { Button } from '@/components/ui/button';
 import { StorageIndicator } from './StorageIndicator';
 import { FileUpload } from './FileUpload';
 import { OnlineStatusBadge } from './OfflineIndicator';
+import { useOffline } from '@/hooks/useOffline';
 
 interface SidebarProps {
   storageUsed: number;
   storageLimit: number;
   onUploadComplete: () => void;
-  isOnline: boolean;
   isMobile?: boolean;
   onClose?: () => void;
+  className?: string;
 }
 
 const navItems = [
@@ -35,11 +36,12 @@ export const Sidebar = ({
   storageUsed, 
   storageLimit, 
   onUploadComplete,
-  isOnline,
   isMobile,
-  onClose
+  onClose,
+  className
 }: SidebarProps) => {
   const location = useLocation();
+  const { isOnline } = useOffline();
 
   return (
     <motion.aside
@@ -48,14 +50,15 @@ export const Sidebar = ({
       exit={{ x: -280 }}
       className={cn(
         "flex flex-col bg-card border-r border-border h-full",
-        isMobile ? "fixed inset-y-0 left-0 z-50 w-72" : "w-64"
+        isMobile ? "fixed inset-y-0 left-0 z-50 w-72" : "w-64",
+        className
       )}
     >
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <CloudOff className="w-4 h-4 text-primary-foreground" />
+            <Cloud className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-lg">CloudVault</span>
         </div>
