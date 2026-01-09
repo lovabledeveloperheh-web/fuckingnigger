@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, FileIcon, Loader2, CheckCircle, FolderUp } from 'lucide-react';
+import { Upload, X, FileIcon, Loader2, CheckCircle, FolderUp, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useCamera } from '@/hooks/useCamera';
+import { NativeFileBrowser } from './NativeFileBrowser';
+import { Capacitor } from '@capacitor/core';
 
 interface FileUploadProps {
   onUploadComplete: () => void;
@@ -21,6 +24,29 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
   const [isDragging, setIsDragging] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const { user } = useAuth();
+  const { takePhoto, pickFromGallery, isLoading: cameraLoading } = useCamera();
+  const isNativePlatform = Capacitor.isNativePlatform();
+
+  // Handle camera photo upload
+  const handleCameraUpload = async (source: 'camera' | 'gallery') => {
+    const photo = source === 'camera' ? await takePhoto() : await pickFromGallery();
+    if (!photo?.base64String || !user) return;
+
+    const fileName = `photo_${Date.now()}.${photo.format}`;
+    const mimeType = `image/${photo.format}`;
+
+    // Convert base64 to File
+    const byteCharacters = atob(photo.base64String);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    const file = new File([blob], fileName, { type: mimeType });
+
+    await uploadFile(file);
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -36,23 +62,20 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
     if (!user) return;
 
     const fileId = crypto.randomUUID();
-    // Preserve exact original filename
     const storagePath = `${user.id}/${folderPath === '/' ? '' : folderPath.slice(1)}${fileId}-${file.name}`;
 
     setUploadingFiles(prev => [...prev, { file, progress: 0, status: 'uploading' }]);
 
     try {
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('user-files')
         .upload(storagePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Create file record in database - preserving exact filename
       const { error: dbError } = await supabase.from('files').insert({
         user_id: user.id,
-        name: file.name, // Exact original filename
+        name: file.name,
         size: file.size,
         mime_type: file.type || 'application/octet-stream',
         storage_path: storagePath,
@@ -133,14 +156,12 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
     if (e.target.files) {
       const files = Array.from(e.target.files);
       
-      // Group files by their relative paths
       const filesByFolder = new Map<string, File[]>();
       
       for (const file of files) {
-        // webkitRelativePath contains the full path including folder name
         const relativePath = (file as any).webkitRelativePath || file.name;
         const pathParts = relativePath.split('/');
-        pathParts.pop(); // Remove filename
+        pathParts.pop();
         const folderPath = pathParts.length > 0 ? `/${pathParts.join('/')}/` : currentFolder;
         
         if (!filesByFolder.has(folderPath)) {
@@ -149,7 +170,6 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
         filesByFolder.get(folderPath)!.push(file);
       }
 
-      // Upload files maintaining folder structure
       for (const [folderPath, folderFiles] of filesByFolder) {
         for (const file of folderFiles) {
           await uploadFile(file, folderPath);
@@ -183,7 +203,7 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
         </h3>
         <p className="text-sm text-muted-foreground mb-4">or</p>
         
-        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+        <div className="flex flex-col sm:flex-row gap-2 justify-center flex-wrap">
           <label>
             <input
               type="file"
@@ -216,7 +236,39 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
               </span>
             </Button>
           </label>
+
+          {/* Native Camera/Gallery buttons */}
+          {isNativePlatform && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => handleCameraUpload('camera')}
+                disabled={cameraLoading}
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Camera
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleCameraUpload('gallery')}
+                disabled={cameraLoading}
+              >
+                <FileIcon className="w-4 h-4 mr-2" />
+                Gallery
+              </Button>
+            </>
+          )}
         </div>
+
+        {/* Native File Browser */}
+        {isNativePlatform && (
+          <div className="mt-4">
+            <NativeFileBrowser 
+              onUploadComplete={onUploadComplete}
+              currentFolder={currentFolder}
+            />
+          </div>
+        )}
       </div>
 
       {/* Uploading Files */}
