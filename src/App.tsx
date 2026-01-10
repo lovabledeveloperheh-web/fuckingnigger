@@ -16,6 +16,7 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { BackupSchedulesPage } from "./pages/BackupSchedulesPage";
 import { SharedFilePage } from "./pages/SharedFilePage";
 import UploadPage from "./pages/UploadPage";
+import { TransferManager } from "./components/dashboard/TransferManager";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/share/:token" element={<SharedFilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <TransferManager />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
