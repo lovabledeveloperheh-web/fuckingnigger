@@ -1,31 +1,31 @@
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, FileIcon, Loader2, CheckCircle, Camera } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Upload, FileIcon, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
 import { useCamera } from '@/hooks/useCamera';
 import { NativeFileBrowser } from './NativeFileBrowser';
 import { Capacitor } from '@capacitor/core';
+import { useUploadManager } from '@/hooks/useUploadManager';
+import { toast } from 'sonner';
 
 interface FileUploadProps {
   onUploadComplete: () => void;
   currentFolder: string;
 }
 
-interface UploadingFile {
-  file: File;
-  progress: number;
-  status: 'uploading' | 'complete' | 'error';
-}
-
 export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const { user } = useAuth();
   const { takePhoto, pickFromGallery, isLoading: cameraLoading } = useCamera();
   const isNativePlatform = Capacitor.isNativePlatform();
+  const { addUpload } = useUploadManager();
+
+  const uploadFile = (file: File, folderPath: string = currentFolder) => {
+    if (!user) return;
+    addUpload(file, user.id, folderPath);
+    toast.info(`${file.name} added to upload queue`);
+  };
 
   // Handle camera photo upload
   const handleCameraUpload = async (source: 'camera' | 'gallery') => {
@@ -45,7 +45,7 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
     const blob = new Blob([byteArray], { type: mimeType });
     const file = new File([blob], fileName, { type: mimeType });
 
-    await uploadFile(file);
+    uploadFile(file);
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -58,58 +58,13 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
     setIsDragging(false);
   }, []);
 
-  const uploadFile = async (file: File, folderPath: string = currentFolder) => {
-    if (!user) return;
-
-    const fileId = crypto.randomUUID();
-    const storagePath = `${user.id}/${folderPath === '/' ? '' : folderPath.slice(1)}${fileId}-${file.name}`;
-
-    setUploadingFiles(prev => [...prev, { file, progress: 0, status: 'uploading' }]);
-
-    try {
-      const { error: uploadError } = await supabase.storage
-        .from('user-files')
-        .upload(storagePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: dbError } = await supabase.from('files').insert({
-        user_id: user.id,
-        name: file.name,
-        size: file.size,
-        mime_type: file.type || 'application/octet-stream',
-        storage_path: storagePath,
-        folder_path: folderPath,
-      });
-
-      if (dbError) throw dbError;
-
-      setUploadingFiles(prev =>
-        prev.map(f => (f.file === file ? { ...f, progress: 100, status: 'complete' } : f))
-      );
-
-      toast.success(`${file.name} uploaded successfully!`);
-      
-      setTimeout(() => {
-        setUploadingFiles(prev => prev.filter(f => f.file !== file));
-        onUploadComplete();
-      }, 1500);
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      setUploadingFiles(prev =>
-        prev.map(f => (f.file === file ? { ...f, status: 'error' } : f))
-      );
-      toast.error(`Failed to upload ${file.name}`);
-    }
-  };
-
   const processEntry = async (entry: FileSystemEntry, path: string = currentFolder): Promise<void> => {
     if (entry.isFile) {
       const fileEntry = entry as FileSystemFileEntry;
       const file = await new Promise<File>((resolve, reject) => {
         fileEntry.file(resolve, reject);
       });
-      await uploadFile(file, path);
+      uploadFile(file, path);
     } else if (entry.isDirectory) {
       const dirEntry = entry as FileSystemDirectoryEntry;
       const folderPath = `${path}${entry.name}/`;
@@ -150,37 +105,6 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
       files.forEach(file => uploadFile(file));
     }
     e.target.value = '';
-  };
-
-  const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      
-      const filesByFolder = new Map<string, File[]>();
-      
-      for (const file of files) {
-        const relativePath = (file as any).webkitRelativePath || file.name;
-        const pathParts = relativePath.split('/');
-        pathParts.pop();
-        const folderPath = pathParts.length > 0 ? `/${pathParts.join('/')}/` : currentFolder;
-        
-        if (!filesByFolder.has(folderPath)) {
-          filesByFolder.set(folderPath, []);
-        }
-        filesByFolder.get(folderPath)!.push(file);
-      }
-
-      for (const [folderPath, folderFiles] of filesByFolder) {
-        for (const file of folderFiles) {
-          await uploadFile(file, folderPath);
-        }
-      }
-    }
-    e.target.value = '';
-  };
-
-  const removeUploadingFile = (file: File) => {
-    setUploadingFiles(prev => prev.filter(f => f.file !== file));
   };
 
   return (
@@ -252,55 +176,6 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
           </div>
         )}
       </div>
-
-      {/* Uploading Files */}
-      <AnimatePresence>
-        {uploadingFiles.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-2"
-          >
-            {uploadingFiles.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border/50"
-              >
-                <FileIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" title={item.file.name}>
-                    {item.file.name}
-                  </p>
-                  <div className="h-1 bg-secondary rounded-full mt-1 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: item.status === 'uploading' ? '70%' : '100%' }}
-                      className={`h-full rounded-full ${
-                        item.status === 'error' ? 'bg-destructive' : 'gradient-brand'
-                      }`}
-                    />
-                  </div>
-                </div>
-                {item.status === 'uploading' && (
-                  <Loader2 className="w-5 h-5 text-primary animate-spin flex-shrink-0" />
-                )}
-                {item.status === 'complete' && (
-                  <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
-                )}
-                {item.status === 'error' && (
-                  <button onClick={() => removeUploadingFile(item.file)}>
-                    <X className="w-5 h-5 text-destructive" />
-                  </button>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

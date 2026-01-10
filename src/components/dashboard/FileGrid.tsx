@@ -6,6 +6,7 @@ import { FileCard } from './FileCard';
 import { FilePreviewModal } from './FilePreviewModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useDownloadManager } from '@/hooks/useDownloadManager';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,7 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh, favorites, on
   const [deleteFile, setDeleteFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [currentFolder, setCurrentFolder] = useState('/');
+  const { addDownload } = useDownloadManager();
 
   const filteredFiles = files.filter(file =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -60,33 +62,13 @@ export const FileGrid = ({ files, loading, searchQuery, onRefresh, favorites, on
       .filter(Boolean)
   )];
 
-  const handleDownload = async (file: File) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('user-files')
-        .download(file.storage_path);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name; // Use original filename
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-      
-      toast.success(`Downloading ${file.name}`);
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download file');
-    }
+  const handleDownload = (file: File) => {
+    addDownload({
+      id: file.id,
+      name: file.name,
+      size: file.size,
+      storage_path: file.storage_path,
+    });
   };
 
   const handleDelete = async () => {
