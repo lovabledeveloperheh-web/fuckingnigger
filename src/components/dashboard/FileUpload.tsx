@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, FileIcon, Loader2, CheckCircle, FolderUp, Camera } from 'lucide-react';
+import { Upload, X, FileIcon, Loader2, CheckCircle, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -199,7 +199,7 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
         </motion.div>
         
         <h3 className="font-medium text-foreground mb-1">
-          {isDragging ? 'Drop files or folders here' : 'Drag & drop files or folders'}
+          {isDragging ? 'Drop files here' : 'Drag & drop files'}
         </h3>
         <p className="text-sm text-muted-foreground mb-4">or</p>
         
@@ -214,25 +214,7 @@ export const FileUpload = ({ onUploadComplete, currentFolder }: FileUploadProps)
             <Button variant="outline" className="cursor-pointer" asChild>
               <span>
                 <Upload className="w-4 h-4 mr-2" />
-                Files
-              </span>
-            </Button>
-          </label>
-          
-          <label>
-            <input
-              type="file"
-              // @ts-ignore - webkitdirectory is valid but not in types
-              webkitdirectory=""
-              directory=""
-              multiple
-              className="hidden"
-              onChange={handleFolderSelect}
-            />
-            <Button variant="outline" className="cursor-pointer" asChild>
-              <span>
-                <FolderUp className="w-4 h-4 mr-2" />
-                Folder
+                Browse Files
               </span>
             </Button>
           </label>

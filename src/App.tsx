@@ -15,6 +15,7 @@ import { OfflineFilesPage } from "./pages/OfflineFilesPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { BackupSchedulesPage } from "./pages/BackupSchedulesPage";
 import { SharedFilePage } from "./pages/SharedFilePage";
+import UploadPage from "./pages/UploadPage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard/upload" element={<UploadPage />} />
             <Route path="/dashboard/trash" element={<TrashPage />} />
             <Route path="/dashboard/favorites" element={<FavoritesPage />} />
             <Route path="/dashboard/recent" element={<RecentFilesPage />} />
