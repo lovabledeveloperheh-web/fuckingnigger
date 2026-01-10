@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Cloud, Search, LogOut, User, Menu, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Cloud, Search, LogOut, User, Menu, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,9 @@ interface HeaderProps {
 
 export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }: HeaderProps) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === '/dashboard' || location.pathname === '/';
 
   const getInitials = (email: string) => {
     return email.slice(0, 2).toUpperCase();
@@ -46,6 +50,19 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
             </div>
             <span className="font-display font-bold text-xl hidden sm:inline">CloudVault</span>
           </div>
+
+          {/* Home Button - show when not on home */}
+          {!isHome && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="ml-2"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Home</span>
+            </Button>
+          )}
         </div>
 
         {/* Center: Search */}

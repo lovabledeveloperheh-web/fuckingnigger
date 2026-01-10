@@ -98,33 +98,44 @@ export const FileCard = ({ file, onDownload, onDelete, onPreview, index, isFavor
             />
           )}
 
+          {/* Always visible Download button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onDownload(file)}
+            title="Download"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+
           <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isPreviewable && (
-              <DropdownMenuItem onClick={() => onPreview(file)}>
-                <Eye className="w-4 h-4 mr-2" />
-                Preview
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isPreviewable && (
+                <DropdownMenuItem onClick={() => onPreview(file)}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => onDownload(file)}>
+                <Download className="w-4 h-4 mr-2" />
+                Download
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => onDownload(file)}>
-              <Download className="w-4 h-4 mr-2" />
-              Download
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(file)} className="text-destructive">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem onClick={() => onDelete(file)} className="text-destructive">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </motion.div>
