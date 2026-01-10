@@ -1,13 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   FolderOpen, Clock, Star, Image, Link, CloudOff, 
-  Trash2, BarChart3, Calendar, Settings, X, Cloud
+  Trash2, BarChart3, Calendar, Settings, X, Cloud, Upload
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { StorageIndicator } from './StorageIndicator';
-import { FileUpload } from './FileUpload';
 import { OnlineStatusBadge } from './OfflineIndicator';
 import { useOffline } from '@/hooks/useOffline';
 
@@ -22,6 +21,7 @@ interface SidebarProps {
 
 const navItems = [
   { path: '/dashboard', icon: FolderOpen, label: 'My Files', exact: true },
+  { path: '/dashboard/upload', icon: Upload, label: 'Upload Files' },
   { path: '/dashboard/recent', icon: Clock, label: 'Recent' },
   { path: '/dashboard/favorites', icon: Star, label: 'Favorites' },
   { path: '/dashboard/gallery', icon: Image, label: 'Gallery' },
@@ -77,11 +77,6 @@ export const Sidebar = ({
       {/* Storage */}
       <div className="px-4 py-2">
         <StorageIndicator used={storageUsed} limit={storageLimit} />
-      </div>
-
-      {/* Upload */}
-      <div className="px-4 py-2">
-        <FileUpload onUploadComplete={onUploadComplete} currentFolder="/" />
       </div>
 
       {/* Navigation */}

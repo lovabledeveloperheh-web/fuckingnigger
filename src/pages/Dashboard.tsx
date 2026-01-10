@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/dashboard/Header';
-import { FileUpload } from '@/components/dashboard/FileUpload';
 import { FileGrid } from '@/components/dashboard/FileGrid';
 import { SyncIndicator } from '@/components/dashboard/SyncIndicator';
 import { Sidebar } from '@/components/dashboard/Sidebar';
@@ -34,7 +33,6 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<ProfileData>({ storage_used: 0, storage_limit: 1125899906842624 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentFolder] = useState('/');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const fetchFiles = async () => {
@@ -146,11 +144,6 @@ const Dashboard = () => {
             <div className="mb-6">
               <h1 className="text-2xl font-display font-bold">My Files</h1>
               <p className="text-muted-foreground">Manage and organize your cloud storage</p>
-            </div>
-
-            {/* Mobile Upload Button */}
-            <div className="md:hidden mb-6">
-              <FileUpload onUploadComplete={handleRefresh} currentFolder={currentFolder} />
             </div>
 
             <FileGrid 
