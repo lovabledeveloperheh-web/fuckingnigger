@@ -7,7 +7,7 @@ interface SharedLink {
   id: string;
   file_id: string;
   share_token: string;
-  password: string | null;
+  has_password: boolean;
   expires_at: string | null;
   download_count: number;
   max_downloads: number | null;
@@ -29,14 +29,28 @@ export const useSharing = () => {
     if (!user) return;
     setLoading(true);
     try {
+      // Fetch shared links - password_hash is not exposed, we check if it exists
       const { data, error } = await supabase
         .from('shared_links')
-        .select('*')
+        .select('id, file_id, share_token, password_hash, expires_at, download_count, max_downloads, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSharedLinks(data || []);
+      
+      // Map to include has_password instead of exposing hash
+      const mappedLinks: SharedLink[] = (data || []).map(link => ({
+        id: link.id,
+        file_id: link.file_id,
+        share_token: link.share_token,
+        has_password: !!link.password_hash,
+        expires_at: link.expires_at,
+        download_count: link.download_count,
+        max_downloads: link.max_downloads,
+        created_at: link.created_at
+      }));
+      
+      setSharedLinks(mappedLinks);
     } catch (error) {
       console.error('Error fetching shared links:', error);
     } finally {
@@ -57,24 +71,34 @@ export const useSharing = () => {
     try {
       const shareToken = generateToken();
       
-      const { data, error } = await supabase
-        .from('shared_links')
-        .insert({
-          user_id: user.id,
-          file_id: fileId,
-          share_token: shareToken,
-          password: options?.password || null,
-          expires_at: options?.expiresAt?.toISOString() || null,
-          max_downloads: options?.maxDownloads || null
-        })
-        .select()
-        .single();
+      // Use secure RPC function that hashes passwords server-side
+      const { data, error } = await supabase.rpc('create_secure_share_link', {
+        p_file_id: fileId,
+        p_share_token: shareToken,
+        p_password: options?.password || null,
+        p_expires_at: options?.expiresAt?.toISOString() || null,
+        p_max_downloads: options?.maxDownloads || null
+      });
 
       if (error) throw error;
       
-      setSharedLinks(prev => [data, ...prev]);
+      const result = data?.[0];
+      if (!result) throw new Error('Failed to create share link');
+      
+      const newLink: SharedLink = {
+        id: result.id,
+        file_id: result.file_id,
+        share_token: result.share_token,
+        has_password: result.has_password,
+        expires_at: result.expires_at,
+        download_count: result.download_count,
+        max_downloads: result.max_downloads,
+        created_at: result.created_at
+      };
+      
+      setSharedLinks(prev => [newLink, ...prev]);
       toast.success('Share link created');
-      return data;
+      return newLink;
     } catch (error) {
       console.error('Error creating share link:', error);
       toast.error('Failed to create share link');
@@ -103,48 +127,11 @@ export const useSharing = () => {
     }
   }, [user]);
 
-  const getShareLinkByToken = useCallback(async (token: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('shared_links')
-        .select('*')
-        .eq('share_token', token)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error fetching share link:', error);
-      return null;
-    }
-  }, []);
-
-  const incrementDownloadCount = useCallback(async (linkId: string) => {
-    try {
-      const { data: current } = await supabase
-        .from('shared_links')
-        .select('download_count')
-        .eq('id', linkId)
-        .single();
-      
-      if (current) {
-        await supabase
-          .from('shared_links')
-          .update({ download_count: current.download_count + 1 })
-          .eq('id', linkId);
-      }
-    } catch (error) {
-      console.error('Error incrementing download count:', error);
-    }
-  }, []);
-
   return {
     sharedLinks,
     loading,
     fetchSharedLinks,
     createShareLink,
-    deleteShareLink,
-    getShareLinkByToken,
-    incrementDownloadCount
+    deleteShareLink
   };
 };

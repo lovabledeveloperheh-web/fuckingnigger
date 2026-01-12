@@ -7,21 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
-interface SharedLink {
-  id: string;
-  file_id: string;
-  password: string | null;
-  expires_at: string | null;
-  download_count: number;
-  max_downloads: number | null;
-}
-
 interface FileData {
   id: string;
   name: string;
   size: number;
   mime_type: string | null;
   storage_path: string;
+}
+
+interface LinkInfo {
+  link_id: string;
+  download_count: number;
+  max_downloads: number | null;
 }
 
 const formatSize = (bytes: number) => {
@@ -35,12 +32,13 @@ const formatSize = (bytes: number) => {
 export const SharedFilePage = () => {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
-  const [link, setLink] = useState<SharedLink | null>(null);
   const [file, setFile] = useState<FileData | null>(null);
+  const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
 
   useEffect(() => {
     const fetchSharedFile = async () => {
@@ -51,56 +49,60 @@ export const SharedFilePage = () => {
       }
 
       try {
-        // Fetch share link
-        const { data: linkData, error: linkError } = await supabase
-          .from('shared_links')
-          .select('*')
-          .eq('share_token', token)
-          .single();
+        // Use server-side verification function (no password initially)
+        const { data, error: verifyError } = await supabase.rpc('verify_shared_link_access', {
+          p_share_token: token,
+          p_password: null
+        });
 
-        if (linkError || !linkData) {
+        if (verifyError) {
+          console.error('Verification error:', verifyError);
+          setError('An error occurred while verifying the link');
+          setLoading(false);
+          return;
+        }
+
+        const result = data?.[0];
+
+        if (!result) {
           setError('Share link not found or has been deleted');
           setLoading(false);
           return;
         }
 
-        // Check if expired
-        if (linkData.expires_at && new Date(linkData.expires_at) < new Date()) {
-          setError('This share link has expired');
+        if (result.rate_limited) {
+          setRateLimited(true);
+          setError('Too many failed attempts. Please try again later.');
           setLoading(false);
           return;
         }
 
-        // Check download limit
-        if (linkData.max_downloads && linkData.download_count >= linkData.max_downloads) {
-          setError('Download limit reached for this link');
-          setLoading(false);
-          return;
-        }
-
-        setLink(linkData);
-
-        // Check if password required
-        if (linkData.password) {
+        if (result.requires_password && !result.valid) {
+          // Password required but not provided
           setPasswordRequired(true);
           setLoading(false);
           return;
         }
 
-        // Fetch file info
-        const { data: fileData, error: fileError } = await supabase
-          .from('files')
-          .select('*')
-          .eq('id', linkData.file_id)
-          .single();
-
-        if (fileError || !fileData) {
-          setError('File not found');
+        if (!result.valid) {
+          setError('Share link not found, expired, or download limit reached');
           setLoading(false);
           return;
         }
 
-        setFile(fileData);
+        // Success - set file and link info
+        setFile({
+          id: result.file_id,
+          name: result.file_name,
+          size: result.file_size,
+          mime_type: result.file_mime_type,
+          storage_path: result.file_storage_path
+        });
+        setLinkInfo({
+          link_id: result.link_id,
+          download_count: result.download_count,
+          max_downloads: result.max_downloads
+        });
       } catch (err) {
         console.error('Error:', err);
         setError('An error occurred');
@@ -113,31 +115,70 @@ export const SharedFilePage = () => {
   }, [token]);
 
   const verifyPassword = async () => {
-    if (!link) return;
+    if (!token || !password) return;
 
-    if (password === link.password) {
-      setPasswordRequired(false);
-      setLoading(true);
+    setLoading(true);
+    try {
+      // Server-side password verification with rate limiting
+      const { data, error: verifyError } = await supabase.rpc('verify_shared_link_access', {
+        p_share_token: token,
+        p_password: password
+      });
 
-      const { data: fileData } = await supabase
-        .from('files')
-        .select('*')
-        .eq('id', link.file_id)
-        .single();
-
-      if (fileData) {
-        setFile(fileData);
-      } else {
-        setError('File not found');
+      if (verifyError) {
+        console.error('Verification error:', verifyError);
+        toast.error('Verification failed');
+        setLoading(false);
+        return;
       }
+
+      const result = data?.[0];
+
+      if (!result) {
+        toast.error('Verification failed');
+        setLoading(false);
+        return;
+      }
+
+      if (result.rate_limited) {
+        setRateLimited(true);
+        setPasswordRequired(false);
+        setError('Too many failed attempts. Please try again later.');
+        setLoading(false);
+        return;
+      }
+
+      if (!result.valid) {
+        toast.error('Incorrect password');
+        setPassword('');
+        setLoading(false);
+        return;
+      }
+
+      // Success - password verified server-side
+      setPasswordRequired(false);
+      setFile({
+        id: result.file_id,
+        name: result.file_name,
+        size: result.file_size,
+        mime_type: result.file_mime_type,
+        storage_path: result.file_storage_path
+      });
+      setLinkInfo({
+        link_id: result.link_id,
+        download_count: result.download_count,
+        max_downloads: result.max_downloads
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Verification failed');
+    } finally {
       setLoading(false);
-    } else {
-      toast.error('Incorrect password');
     }
   };
 
   const handleDownload = async () => {
-    if (!file || !link) return;
+    if (!file || !linkInfo) return;
 
     setDownloading(true);
     try {
@@ -147,11 +188,10 @@ export const SharedFilePage = () => {
 
       if (error) throw error;
 
-      // Increment download count
-      await supabase
-        .from('shared_links')
-        .update({ download_count: link.download_count + 1 })
-        .eq('id', link.id);
+      // Increment download count server-side
+      await supabase.rpc('increment_shared_link_download', {
+        p_link_id: linkInfo.link_id
+      });
 
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
@@ -185,6 +225,11 @@ export const SharedFilePage = () => {
             <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-2" />
             <CardTitle>Unable to Access File</CardTitle>
             <CardDescription>{error}</CardDescription>
+            {rateLimited && (
+              <CardDescription className="mt-2 text-sm">
+                Please wait at least an hour before trying again.
+              </CardDescription>
+            )}
           </CardHeader>
         </Card>
       </div>
