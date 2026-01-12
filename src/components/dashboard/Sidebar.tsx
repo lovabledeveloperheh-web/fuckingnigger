@@ -107,10 +107,21 @@ export const Sidebar = ({
 
       {/* Footer */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground">
+        <NavLink
+          to="/dashboard/settings"
+          onClick={isMobile ? onClose : undefined}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )
+          }
+        >
           <Settings className="w-5 h-5" />
           Settings
-        </div>
+        </NavLink>
       </div>
     </motion.aside>
   );
