@@ -24,7 +24,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === '/dashboard' || location.pathname === '/';
+  const isHome = location.pathname === '/';
 
   const getInitials = (email: string) => {
     return email.slice(0, 2).toUpperCase();
@@ -56,7 +56,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/')}
               className="ml-2"
             >
               <Home className="w-4 h-4 mr-2" />

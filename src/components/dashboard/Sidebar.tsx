@@ -20,7 +20,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { path: '/dashboard', icon: FolderOpen, label: 'My Files', exact: true },
+  { path: '/', icon: FolderOpen, label: 'My Files', exact: true },
   { path: '/dashboard/upload', icon: Upload, label: 'Upload Files' },
   { path: '/dashboard/recent', icon: Clock, label: 'Recent' },
   { path: '/dashboard/favorites', icon: Star, label: 'Favorites' },
@@ -107,13 +107,10 @@ export const Sidebar = ({
 
       {/* Footer */}
       <div className="p-4 border-t border-border">
-        <NavLink
-          to="/dashboard/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-        >
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground">
           <Settings className="w-5 h-5" />
           Settings
-        </NavLink>
+        </div>
       </div>
     </motion.aside>
   );
