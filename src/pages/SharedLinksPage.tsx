@@ -110,7 +110,7 @@ export const SharedLinksPage = () => {
                     <p className="font-medium truncate">
                       {fileNames[link.file_id] || 'Unknown file'}
                     </p>
-                    {link.password && (
+                    {link.has_password && (
                       <Badge variant="secondary">🔒 Protected</Badge>
                     )}
                     {expired && (

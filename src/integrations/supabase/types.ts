@@ -218,6 +218,30 @@ export type Database = {
         }
         Relationships: []
       }
+      share_link_attempts: {
+        Row: {
+          attempted_at: string | null
+          client_ip: string | null
+          id: string
+          share_token: string
+          success: boolean | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          client_ip?: string | null
+          id?: string
+          share_token: string
+          success?: boolean | null
+        }
+        Update: {
+          attempted_at?: string | null
+          client_ip?: string | null
+          id?: string
+          share_token?: string
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       shared_links: {
         Row: {
           created_at: string
@@ -226,7 +250,7 @@ export type Database = {
           file_id: string
           id: string
           max_downloads: number | null
-          password: string | null
+          password_hash: string | null
           share_token: string
           user_id: string
         }
@@ -237,7 +261,7 @@ export type Database = {
           file_id: string
           id?: string
           max_downloads?: number | null
-          password?: string | null
+          password_hash?: string | null
           share_token: string
           user_id: string
         }
@@ -248,7 +272,7 @@ export type Database = {
           file_id?: string
           id?: string
           max_downloads?: number | null
-          password?: string | null
+          password_hash?: string | null
           share_token?: string
           user_id?: string
         }
@@ -332,6 +356,45 @@ export type Database = {
     }
     Functions: {
       cleanup_expired_trash: { Args: never; Returns: undefined }
+      create_secure_share_link: {
+        Args: {
+          p_expires_at?: string
+          p_file_id: string
+          p_max_downloads?: number
+          p_password?: string
+          p_share_token: string
+        }
+        Returns: {
+          created_at: string
+          download_count: number
+          expires_at: string
+          file_id: string
+          has_password: boolean
+          id: string
+          max_downloads: number
+          share_token: string
+        }[]
+      }
+      increment_shared_link_download: {
+        Args: { p_link_id: string }
+        Returns: boolean
+      }
+      verify_shared_link_access: {
+        Args: { p_password?: string; p_share_token: string }
+        Returns: {
+          download_count: number
+          file_id: string
+          file_mime_type: string
+          file_name: string
+          file_size: number
+          file_storage_path: string
+          link_id: string
+          max_downloads: number
+          rate_limited: boolean
+          requires_password: boolean
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
