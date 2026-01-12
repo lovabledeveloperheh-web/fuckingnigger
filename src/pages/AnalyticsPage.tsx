@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StorageChart } from '@/components/analytics/StorageChart';
 import { FileTypeBreakdown } from '@/components/analytics/FileTypeBreakdown';
@@ -66,16 +67,19 @@ export const AnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <PageLayout 
+        title="Storage Analytics" 
+        icon={<BarChart3 className="w-6 h-6" />}
+        subtitle="Loading..."
+      >
         <div className="animate-pulse space-y-6">
-          <div className="h-8 w-48 bg-secondary rounded" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-32 bg-secondary rounded-lg" />
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -84,19 +88,13 @@ export const AnalyticsPage = () => {
   const usagePercent = profile ? ((profile.storage_used / profile.storage_limit) * 100).toFixed(1) : '0';
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BarChart3 className="w-6 h-6" />
-          Storage Analytics
-        </h1>
-        <p className="text-muted-foreground">
-          Insights about your storage usage
-        </p>
-      </div>
-
+    <PageLayout 
+      title="Storage Analytics" 
+      icon={<BarChart3 className="w-6 h-6" />}
+      subtitle="Insights about your storage usage"
+    >
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Files</CardDescription>
@@ -123,7 +121,7 @@ export const AnalyticsPage = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader>
             <CardTitle>Storage by Type</CardTitle>
@@ -155,6 +153,6 @@ export const AnalyticsPage = () => {
           <LargestFiles files={files} />
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 };

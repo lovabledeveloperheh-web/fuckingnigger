@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react';
 import { useTrash } from '@/hooks/useTrash';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,6 @@ const daysUntilExpiry = (expiresAt: string) => {
 
 export const TrashPage = () => {
   const { trashItems, loading, fetchTrash, restoreFromTrash, permanentDelete, emptyTrash } = useTrash();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTrash();
@@ -48,34 +48,29 @@ export const TrashPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-secondary rounded" />
+      <PageLayout 
+        title="Trash" 
+        icon={<Trash2 className="w-6 h-6" />}
+        subtitle="Loading..."
+      >
+        <div className="animate-pulse">
           <div className="grid gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-20 bg-secondary rounded-lg" />
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Trash2 className="w-6 h-6" />
-            Trash
-          </h1>
-          <p className="text-muted-foreground">
-            {trashItems.length} items • {formatFileSize(totalSize)}
-          </p>
-        </div>
-        
-        {trashItems.length > 0 && (
+    <PageLayout 
+      title="Trash" 
+      icon={<Trash2 className="w-6 h-6" />}
+      subtitle={`${trashItems.length} items • ${formatFileSize(totalSize)}`}
+      actions={
+        trashItems.length > 0 && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
@@ -97,13 +92,13 @@ export const TrashPage = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        )}
-      </div>
-
+        )
+      }
+    >
       {/* Info Card */}
-      <Card className="bg-amber-500/10 border-amber-500/20">
+      <Card className="bg-amber-500/10 border-amber-500/20 mb-6">
         <CardContent className="flex items-center gap-3 p-4">
-          <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
           <p className="text-sm text-amber-700 dark:text-amber-300">
             Items in trash will be automatically deleted after 30 days
           </p>
@@ -125,7 +120,7 @@ export const TrashPage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex items-center justify-between p-4 rounded-lg bg-card border"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-card border gap-3"
             >
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{item.name}</p>
@@ -137,7 +132,7 @@ export const TrashPage = () => {
                 </p>
               </div>
               
-              <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -173,6 +168,6 @@ export const TrashPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };

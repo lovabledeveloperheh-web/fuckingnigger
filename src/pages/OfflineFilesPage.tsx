@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOffline } from '@/hooks/useOffline';
 import { FileCard } from '@/components/dashboard/FileCard';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 interface FileData {
   id: string;
@@ -76,40 +76,36 @@ export const OfflineFilesPage = () => {
 
   if (loading || offlineLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-secondary rounded" />
+      <PageLayout 
+        title="Offline Files" 
+        icon={<CloudOff className="w-6 h-6" />}
+        subtitle="Loading..."
+      >
+        <div className="animate-pulse">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-24 bg-secondary rounded-lg" />
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <CloudOff className="w-6 h-6" />
-            Offline Files
-          </h1>
-          <p className="text-muted-foreground">
-            {files.length} files • {formatFileSize(cacheSize)} cached
-          </p>
-        </div>
-        
-        {files.length > 0 && (
+    <PageLayout 
+      title="Offline Files" 
+      icon={<CloudOff className="w-6 h-6" />}
+      subtitle={`${files.length} files • ${formatFileSize(cacheSize)} cached`}
+      actions={
+        files.length > 0 && (
           <Button variant="outline" onClick={handleClearCache}>
             <Trash2 className="w-4 h-4 mr-2" />
             Clear Cache
           </Button>
-        )}
-      </div>
-
+        )
+      }
+    >
       {files.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <CloudOff className="w-16 h-16 mb-4 opacity-20" />
@@ -130,6 +126,6 @@ export const OfflineFilesPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };
