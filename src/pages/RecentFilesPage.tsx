@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRecentFiles } from '@/hooks/useRecentFiles';
 import { FileCard } from '@/components/dashboard/FileCard';
 import { FilePreviewModal } from '@/components/dashboard/FilePreviewModal';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -91,40 +92,36 @@ export const RecentFilesPage = () => {
 
   if (loading || recentLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-secondary rounded" />
+      <PageLayout 
+        title="Recent Files" 
+        icon={<Clock className="w-6 h-6" />}
+        subtitle="Loading..."
+      >
+        <div className="animate-pulse">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-24 bg-secondary rounded-lg" />
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Clock className="w-6 h-6" />
-            Recent Files
-          </h1>
-          <p className="text-muted-foreground">
-            {files.length} recently accessed files
-          </p>
-        </div>
-        
-        {files.length > 0 && (
+    <PageLayout 
+      title="Recent Files" 
+      icon={<Clock className="w-6 h-6" />}
+      subtitle={`${files.length} recently accessed files`}
+      actions={
+        files.length > 0 && (
           <Button variant="outline" onClick={handleClearHistory}>
             <Trash2 className="w-4 h-4 mr-2" />
             Clear History
           </Button>
-        )}
-      </div>
-
+        )
+      }
+    >
       {files.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <Clock className="w-16 h-16 mb-4 opacity-20" />
@@ -154,6 +151,6 @@ export const RecentFilesPage = () => {
           onDownload={handleDownload}
         />
       )}
-    </div>
+    </PageLayout>
   );
 };

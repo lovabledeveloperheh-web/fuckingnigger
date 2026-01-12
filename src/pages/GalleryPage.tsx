@@ -3,6 +3,7 @@ import { Image } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { GalleryView } from '@/components/gallery/GalleryView';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { toast } from 'sonner';
 
 interface FileData {
@@ -86,36 +87,33 @@ export const GalleryPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-secondary rounded" />
-          <div className="grid grid-cols-4 gap-2">
+      <PageLayout 
+        title="Gallery" 
+        icon={<Image className="w-6 h-6" />}
+        subtitle="Loading..."
+      >
+        <div className="animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
               <div key={i} className="aspect-square bg-secondary rounded-lg" />
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Image className="w-6 h-6" />
-          Gallery
-        </h1>
-        <p className="text-muted-foreground">
-          {files.length} photos and videos
-        </p>
-      </div>
-
+    <PageLayout 
+      title="Gallery" 
+      icon={<Image className="w-6 h-6" />}
+      subtitle={`${files.length} photos and videos`}
+    >
       <GalleryView 
         files={files}
         onGetSignedUrl={getSignedUrl}
         onDownload={handleDownload}
       />
-    </div>
+    </PageLayout>
   );
 };

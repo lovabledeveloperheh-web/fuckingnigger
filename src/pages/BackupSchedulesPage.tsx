@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Calendar, Plus, Play, Pause, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBackupSchedules } from '@/hooks/useBackupSchedules';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -71,32 +72,28 @@ export const BackupSchedulesPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-secondary rounded" />
+      <PageLayout 
+        title="Backup Schedules" 
+        icon={<Calendar className="w-6 h-6" />}
+        subtitle="Loading..."
+      >
+        <div className="animate-pulse">
           <div className="grid gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-32 bg-secondary rounded-lg" />
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="w-6 h-6" />
-            Backup Schedules
-          </h1>
-          <p className="text-muted-foreground">
-            Automate your file backups
-          </p>
-        </div>
-        
+    <PageLayout 
+      title="Backup Schedules" 
+      icon={<Calendar className="w-6 h-6" />}
+      subtitle="Automate your file backups"
+      actions={
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -145,8 +142,8 @@ export const BackupSchedulesPage = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-
+      }
+    >
       {schedules.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -165,13 +162,20 @@ export const BackupSchedulesPage = () => {
               transition={{ delay: index * 0.05 }}
             >
               <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <CardTitle className="text-lg">{schedule.name}</CardTitle>
-                      <Badge variant={schedule.enabled ? 'default' : 'secondary'}>
-                        {schedule.enabled ? 'Active' : 'Paused'}
-                      </Badge>
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium truncate">{schedule.name}</p>
+                          <Badge variant={schedule.enabled ? 'default' : 'secondary'}>
+                            {schedule.enabled ? 'Active' : 'Paused'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Runs {schedule.frequency}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -180,7 +184,7 @@ export const BackupSchedulesPage = () => {
                         onClick={() => runBackupNow(schedule.id)}
                       >
                         <Play className="w-4 h-4 mr-1" />
-                        Run Now
+                        <span className="hidden sm:inline">Run Now</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -202,12 +206,7 @@ export const BackupSchedulesPage = () => {
                       </Button>
                     </div>
                   </div>
-                  <CardDescription>
-                    Runs {schedule.frequency}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm mt-4">
                     <div>
                       <p className="text-muted-foreground">Last Run</p>
                       <p className="font-medium">{formatDate(schedule.last_run_at)}</p>
@@ -223,6 +222,6 @@ export const BackupSchedulesPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };
