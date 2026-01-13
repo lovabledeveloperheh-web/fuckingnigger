@@ -19,6 +19,7 @@ import { SharedFilePage } from "./pages/SharedFilePage";
 import UploadPage from "./pages/UploadPage";
 import SettingsPage from "./pages/SettingsPage";
 import { TransferManager } from "./components/dashboard/TransferManager";
+import { InstallPrompt } from "./components/pwa/InstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <TransferManager />
+            <InstallPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
