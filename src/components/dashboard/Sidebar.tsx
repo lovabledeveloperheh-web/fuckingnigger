@@ -49,38 +49,39 @@ export const Sidebar = ({
       animate={{ x: 0 }}
       exit={{ x: -280 }}
       className={cn(
-        "flex flex-col bg-card border-r border-border h-full",
-        isMobile ? "fixed inset-y-0 left-0 z-50 w-72" : "w-64",
+        "flex flex-col bg-card/95 backdrop-blur-xl border-r border-border/60 h-full",
+        isMobile ? "fixed inset-y-0 left-0 z-50 w-72" : "w-72",
         className
       )}
+      style={{ boxShadow: 'var(--shadow-lg)' }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Cloud className="w-4 h-4 text-primary-foreground" />
+      <div className="p-5 border-b border-border/60 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center shadow-brand">
+            <Cloud className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-semibold text-lg">CloudVault</span>
+          <span className="font-bold text-xl tracking-tight">CloudVault</span>
         </div>
         {isMobile && (
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl">
             <X className="w-5 h-5" />
           </Button>
         )}
       </div>
 
       {/* Online Status */}
-      <div className="px-4 py-2">
+      <div className="px-5 py-3">
         <OnlineStatusBadge isOnline={isOnline} />
       </div>
 
       {/* Storage */}
-      <div className="px-4 py-2">
+      <div className="px-5 py-3">
         <StorageIndicator used={storageUsed} limit={storageLimit} />
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = item.exact 
             ? location.pathname === item.path
@@ -92,10 +93,8 @@ export const Sidebar = ({
               to={item.path}
               onClick={isMobile ? onClose : undefined}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                "nav-link",
+                isActive ? "nav-link-active" : "nav-link-inactive"
               )}
             >
               <item.icon className="w-5 h-5" />
@@ -106,16 +105,14 @@ export const Sidebar = ({
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border/60">
         <NavLink
           to="/dashboard/settings"
           onClick={isMobile ? onClose : undefined}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              "nav-link",
+              isActive ? "nav-link-active" : "nav-link-inactive"
             )
           }
         >

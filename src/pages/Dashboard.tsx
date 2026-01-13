@@ -135,15 +135,15 @@ const Dashboard = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
           >
-            <div className="mb-6">
-              <h1 className="text-2xl font-display font-bold">My Files</h1>
-              <p className="text-muted-foreground">Manage and organize your cloud storage</p>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold tracking-tight mb-1">My Files</h1>
+              <p className="text-muted-foreground text-lg">Manage and organize your cloud storage</p>
             </div>
 
             <FileGrid 

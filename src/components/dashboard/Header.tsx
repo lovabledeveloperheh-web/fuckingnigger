@@ -31,24 +31,24 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-card border-b border-border/50">
+    <header className="sticky top-0 z-50 glass-card border-b border-border/40">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
         {/* Left: Logo & Menu Toggle */}
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden rounded-xl"
             onClick={onMenuToggle}
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
           
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center shadow-brand">
               <Cloud className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-xl hidden sm:inline">CloudVault</span>
+            <span className="font-bold text-xl hidden sm:inline tracking-tight">CloudVault</span>
           </div>
 
           {/* Home Button - show when not on home */}
@@ -57,7 +57,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
               variant="ghost"
               size="sm"
               onClick={() => navigate('/')}
-              className="ml-2"
+              className="ml-2 rounded-xl"
             >
               <Home className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Home</span>
@@ -68,13 +68,13 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
         {/* Center: Search */}
         <div className="flex-1 max-w-xl mx-4 hidden sm:block">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-secondary/50 border-0 focus-visible:ring-primary"
+              className="pl-11 h-11 rounded-xl input-premium"
             />
           </div>
         </div>
@@ -82,33 +82,33 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
         {/* Right: User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary text-primary-foreground">
+            <Button variant="ghost" className="relative h-10 w-10 rounded-xl hover:bg-secondary/80">
+              <Avatar className="h-10 w-10 rounded-xl">
+                <AvatarFallback className="rounded-xl gradient-brand text-primary-foreground font-semibold">
                   {user?.email ? getInitials(user.email) : 'U'}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="flex items-center gap-2 p-2">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+          <DropdownMenuContent align="end" className="w-64 rounded-xl p-2">
+            <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg mb-2">
+              <Avatar className="h-10 w-10 rounded-xl">
+                <AvatarFallback className="rounded-xl gradient-brand text-primary-foreground text-sm font-semibold">
                   {user?.email ? getInitials(user.email) : 'U'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium truncate">{user?.email}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold truncate">{user?.email}</span>
+                <span className="text-xs text-muted-foreground">Personal Account</span>
               </div>
             </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="w-4 h-4 mr-2" />
+            <DropdownMenuItem className="rounded-lg h-10">
+              <User className="w-4 h-4 mr-3" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuItem onClick={signOut} className="text-destructive rounded-lg h-10">
+              <LogOut className="w-4 h-4 mr-3" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -116,15 +116,15 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isMenuOpen }
       </div>
 
       {/* Mobile Search */}
-      <div className="sm:hidden px-4 pb-3">
+      <div className="sm:hidden px-4 pb-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 bg-secondary/50 border-0"
+            className="pl-11 h-11 rounded-xl input-premium"
           />
         </div>
       </div>
