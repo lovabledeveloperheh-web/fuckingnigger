@@ -72,16 +72,16 @@ export const FileCard = ({ file, onDownload, onDelete, onPreview, index, isFavor
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="file-card group"
+      transition={{ delay: index * 0.03, duration: 0.3 }}
+      className="file-card group cursor-pointer"
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className={`w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0`}>
-            <Icon className={`w-5 h-5 ${iconColor}`} />
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className={`w-12 h-12 rounded-xl bg-secondary/80 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105`}>
+            <Icon className={`w-6 h-6 ${iconColor}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-sm truncate" title={file.name}>
+            <p className="font-semibold text-sm truncate mb-1" title={file.name}>
               {file.name}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -102,7 +102,7 @@ export const FileCard = ({ file, onDownload, onDelete, onPreview, index, isFavor
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-xl hover:bg-secondary"
             onClick={() => onDownload(file)}
             title="Download"
           >
@@ -114,23 +114,23 @@ export const FileCard = ({ file, onDownload, onDelete, onPreview, index, isFavor
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-9 w-9 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-secondary"
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="rounded-xl p-1.5">
               {isPreviewable && (
-                <DropdownMenuItem onClick={() => onPreview(file)}>
+                <DropdownMenuItem onClick={() => onPreview(file)} className="rounded-lg">
                   <Eye className="w-4 h-4 mr-2" />
                   Preview
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => onDownload(file)}>
+              <DropdownMenuItem onClick={() => onDownload(file)} className="rounded-lg">
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(file)} className="text-destructive">
+              <DropdownMenuItem onClick={() => onDelete(file)} className="text-destructive rounded-lg">
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </DropdownMenuItem>
