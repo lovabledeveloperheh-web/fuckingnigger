@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { notificationService } from '@/lib/notifications';
 
 interface SharedLink {
   id: string;
@@ -97,7 +98,15 @@ export const useSharing = () => {
       };
       
       setSharedLinks(prev => [newLink, ...prev]);
-      toast.success('Share link created');
+      
+      // Get file name for notification
+      const { data: fileData } = await supabase
+        .from('files')
+        .select('name')
+        .eq('id', fileId)
+        .single();
+      
+      notificationService.notifyShareCreated(fileData?.name || 'File');
       return newLink;
     } catch (error) {
       console.error('Error creating share link:', error);

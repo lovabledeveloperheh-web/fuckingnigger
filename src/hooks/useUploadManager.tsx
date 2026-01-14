@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { notificationService } from '@/lib/notifications';
 
 export interface UploadItem {
   id: string;
@@ -93,19 +94,23 @@ export const useUploadManager = create<UploadManagerState>((set, get) => ({
           if (dbError) {
             get().updateUpload(id, { status: 'error', progress: 0 });
             toast.error(`Failed to save ${file.name}`);
+            notificationService.notifyUploadFailed(file.name, 'Failed to save file');
           } else {
             get().updateUpload(id, { status: 'complete', progress: 100 });
-            toast.success(`${file.name} uploaded!`);
+            // Use notification service for upload complete
+            notificationService.notifyUploadComplete(file.name);
           }
         } else {
           get().updateUpload(id, { status: 'error', progress: 0 });
           toast.error(`Failed to upload ${file.name}`);
+          notificationService.notifyUploadFailed(file.name);
         }
       });
 
       xhr.addEventListener('error', () => {
         get().updateUpload(id, { status: 'error', progress: 0 });
         toast.error(`Failed to upload ${file.name}`);
+        notificationService.notifyUploadFailed(file.name, 'Network error');
       });
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

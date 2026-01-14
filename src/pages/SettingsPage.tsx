@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Bell, Palette, Save, Loader2, Settings } from 'lucide-react';
+import { User, Bell, Palette, Save, Loader2, Settings, Smartphone } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { Capacitor } from '@capacitor/core';
 
 interface ProfileData {
   full_name: string | null;
@@ -28,8 +30,10 @@ interface NotificationPreferences {
 export const SettingsPage = () => {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { isRegistered, register, unregister, isNative } = usePushNotifications();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [enablingPush, setEnablingPush] = useState(false);
   
   const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
@@ -210,6 +214,50 @@ export const SettingsPage = () => {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Smartphone className="w-5 h-5" />
+                  Push Notifications
+                </CardTitle>
+                <CardDescription>
+                  {isNative 
+                    ? "Enable push notifications to get alerts even when the app is closed"
+                    : "Push notifications are only available on the native mobile app"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Push Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {isRegistered 
+                        ? "Push notifications are enabled" 
+                        : isNative 
+                          ? "Tap to enable push notifications"
+                          : "Install the native app for push notifications"}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isRegistered}
+                    disabled={!isNative || enablingPush}
+                    onCheckedChange={async (checked) => {
+                      setEnablingPush(true);
+                      try {
+                        if (checked) {
+                          await register();
+                        } else {
+                          await unregister();
+                        }
+                      } finally {
+                        setEnablingPush(false);
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Notification Preferences</CardTitle>
