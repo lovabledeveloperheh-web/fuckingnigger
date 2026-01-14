@@ -58,6 +58,15 @@ export const setupCapacitorAuthListener = () => {
       }
     }
   });
+
+  // Handle back button to prevent app from closing unexpectedly
+  App.addListener("backButton", ({ canGoBack }) => {
+    if (canGoBack) {
+      window.history.back();
+    }
+    // If we can't go back, don't do anything - prevents app from closing
+    // The user can use the home button to exit the app
+  });
 };
 
 /**
