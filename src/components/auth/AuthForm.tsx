@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Cloud, Mail, Lock, User, Loader2, Eye, EyeOff, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { toast } from 'sonner';
+import { BiometricLockScreen } from './BiometricLockScreen';
 
 export const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,8 +16,15 @@ export const AuthForm = () => {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [showBiometricLock, setShowBiometricLock] = useState(false);
   const { signIn, signUp } = useAuth();
+  const { status: biometricStatus, authenticate, getCredentials, storeCredentials } = useBiometricAuth();
+
+  useEffect(() => {
+    if (biometricStatus.isEnabled && biometricStatus.isAvailable && isLogin) {
+      setShowBiometricLock(true);
+    }
+  }, [biometricStatus.isEnabled, biometricStatus.isAvailable, isLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +34,11 @@ export const AuthForm = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) throw error;
+        
+        if (biometricStatus.isAvailable) {
+          await storeCredentials(email, password);
+        }
+        
         toast.success('Welcome back!');
       } else {
         const { error } = await signUp(email, password, fullName);
@@ -38,37 +52,43 @@ export const AuthForm = () => {
     }
   };
 
-  const handlePasskeyAuth = async () => {
-    // Check if WebAuthn is supported
-    if (!window.PublicKeyCredential) {
-      toast.error('Passkey authentication is not supported on this device');
-      return;
-    }
-
-    setPasskeyLoading(true);
-
+  const handleBiometricLogin = async () => {
+    setLoading(true);
     try {
-      // Check if platform authenticator is available (fingerprint, face ID, etc.)
-      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-      
-      if (!available) {
-        toast.error('No passkey authenticator available on this device');
+      const success = await authenticate();
+      if (!success) {
+        toast.error('Biometric authentication failed');
+        setLoading(false);
         return;
       }
 
-      toast.info('Passkey authentication requires the native app. Please use email/password for now, or install the app on your device.');
-      
+      const credentials = await getCredentials();
+      if (credentials) {
+        const { error } = await signIn(credentials.username, credentials.password);
+        if (error) throw error;
+        toast.success('Welcome back!');
+      } else {
+        toast.info('Please sign in with your email first to enable biometric login');
+        setShowBiometricLock(false);
+      }
     } catch (error: any) {
-      console.error('Passkey error:', error);
-      toast.error('Passkey authentication failed');
+      toast.error(error.message || 'Authentication failed');
     } finally {
-      setPasskeyLoading(false);
+      setLoading(false);
     }
   };
 
+  if (showBiometricLock && isLogin) {
+    return (
+      <BiometricLockScreen 
+        onUnlock={handleBiometricLogin}
+        onSkip={() => setShowBiometricLock(false)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-float" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
@@ -80,7 +100,6 @@ export const AuthForm = () => {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
         <div className="text-center mb-10">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -94,7 +113,6 @@ export const AuthForm = () => {
           <p className="text-muted-foreground mt-3 text-lg">Secure cloud storage for your files</p>
         </div>
 
-        {/* Form Card */}
         <div className="glass-card-elevated rounded-3xl p-8 md:p-10">
           <div className="flex gap-2 mb-8 p-1 bg-secondary/80 rounded-xl">
             <Button
@@ -113,30 +131,33 @@ export const AuthForm = () => {
             </Button>
           </div>
 
-          {/* Passkey Button */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full mb-6 h-12 rounded-xl border-2 font-medium hover:bg-secondary/50 transition-all"
-            onClick={handlePasskeyAuth}
-            disabled={passkeyLoading}
-          >
-            {passkeyLoading ? (
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            ) : (
-              <Fingerprint className="w-5 h-5 mr-2" />
-            )}
-            {isLogin ? 'Sign in with Passkey' : 'Register with Passkey'}
-          </Button>
+          {isLogin && biometricStatus.isAvailable && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mb-6 h-12 rounded-xl border-2 font-medium hover:bg-secondary/50 transition-all"
+                onClick={handleBiometricLogin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <Fingerprint className="w-5 h-5 mr-2" />
+                )}
+                Sign in with {biometricStatus.biometryType === 'faceId' ? 'Face ID' : 'Fingerprint'}
+              </Button>
 
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-4 text-muted-foreground font-medium">or continue with email</span>
-            </div>
-          </div>
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-4 text-muted-foreground font-medium">or continue with email</span>
+                </div>
+              </div>
+            </>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (

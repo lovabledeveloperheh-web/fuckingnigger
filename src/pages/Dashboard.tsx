@@ -79,6 +79,33 @@ const Dashboard = () => {
     fetchProfile();
   }, [user]);
 
+  // Set up realtime subscription for files
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('files-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'files',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Refresh files on any change
+          fetchFiles();
+          fetchProfile();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // Refresh when sync completes
   useEffect(() => {
     if (!syncState.isSyncing && syncState.progress === 100 && syncState.syncedFiles > 0) {
