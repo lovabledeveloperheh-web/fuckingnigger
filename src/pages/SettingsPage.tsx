@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Bell, Palette, Save, Loader2, Settings, Smartphone } from 'lucide-react';
+import { User, Bell, Palette, Save, Loader2, Settings, Smartphone, Fingerprint, Shield } from 'lucide-react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { Capacitor } from '@capacitor/core';
 
 interface ProfileData {
@@ -31,9 +32,11 @@ export const SettingsPage = () => {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { isRegistered, register, unregister, isNative } = usePushNotifications();
+  const { status: biometricStatus, enableBiometric, disableBiometric } = useBiometricAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enablingPush, setEnablingPush] = useState(false);
+  const [enablingBiometric, setEnablingBiometric] = useState(false);
   
   const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
@@ -139,10 +142,14 @@ export const SettingsPage = () => {
     >
       <div className="max-w-2xl">
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-2">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="w-4 h-4" />
@@ -208,6 +215,84 @@ export const SettingsPage = () => {
                     </>
                   )}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Fingerprint className="w-5 h-5" />
+                  Biometric Authentication
+                </CardTitle>
+                <CardDescription>
+                  {biometricStatus.isAvailable 
+                    ? `Use ${biometricStatus.biometryType === 'faceId' ? 'Face ID' : biometricStatus.biometryType === 'fingerprint' ? 'Fingerprint' : 'Biometrics'} to secure your app`
+                    : Capacitor.isNativePlatform() 
+                      ? "Biometric authentication is not available on this device"
+                      : "Biometric authentication is only available on the native mobile app"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-2">
+                      {biometricStatus.biometryType === 'faceId' ? 'Face ID' : 
+                       biometricStatus.biometryType === 'fingerprint' ? 'Fingerprint Lock' : 
+                       'Biometric Lock'}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {biometricStatus.isEnabled 
+                        ? "Your app is secured with biometrics" 
+                        : biometricStatus.isAvailable 
+                          ? "Enable to require biometric verification when opening the app"
+                          : "Not available on this device"}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={biometricStatus.isEnabled}
+                    disabled={!biometricStatus.isAvailable || enablingBiometric}
+                    onCheckedChange={async (checked) => {
+                      setEnablingBiometric(true);
+                      try {
+                        if (checked) {
+                          const success = await enableBiometric();
+                          if (success) {
+                            toast.success('Biometric authentication enabled!');
+                          } else {
+                            toast.error('Failed to enable biometrics');
+                          }
+                        } else {
+                          disableBiometric();
+                          toast.success('Biometric authentication disabled');
+                        }
+                      } finally {
+                        setEnablingBiometric(false);
+                      }
+                    }}
+                  />
+                </div>
+
+                {biometricStatus.isAvailable && (
+                  <div className="p-4 bg-secondary/50 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Fingerprint className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">How it works</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          When enabled, you'll need to verify your identity with 
+                          {biometricStatus.biometryType === 'faceId' ? ' Face ID' : 
+                           biometricStatus.biometryType === 'fingerprint' ? ' your fingerprint' : 
+                           ' biometrics'} each time you open CloudVault.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
